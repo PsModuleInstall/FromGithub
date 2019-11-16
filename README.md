@@ -4,10 +4,10 @@
 ## 🔨 Direct download Modules instalation:
 
 ```powershell
-iex ('$module="${moduleName};$user="${Username}";$repo="${repoName}";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/PSModuleInstallScript/master/install.ps1'))
+iex ('$Module="${moduleName};$User="${Username}";$RepoName="${repoName}";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/PSModuleInstallScript/master/install.ps1'))
 ```
 
 ## Example ⚡:
 ```powershell
-iex ('$module="Bookmarks";$user="stadub";$repo="PowershellScripts"'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/PSModuleInstallScript/master/install.ps1'))
+iex ('$Module="Bookmarks";$User="stadub";$RepoName="PowershellScripts"'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/PSModuleInstallScript/master/install.ps1'))
 ```
