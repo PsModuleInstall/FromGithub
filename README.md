@@ -4,6 +4,7 @@ This repository contain script allows to download module directly from the GitHu
 
 ---------------------
 
+Templates code provided below you can also find in the file `InstallTemplates.ps1`
 
 ### Full module download
 
