@@ -1,5 +1,5 @@
 
-This reporitory contain script allows to download module diretly from the GitHub repo  
+This repository contain script allows to download module directly from the GitHub repo
 
 ---------------------
 
