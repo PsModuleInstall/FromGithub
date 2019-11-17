@@ -1,10 +1,11 @@
+## install.ps1 - Install powershell module from Github 
 
 This repository contain script allows to download module directly from the GitHub repo
 
 ---------------------
 
 
-### Downloading module from Github repository
+### Full module download
 
 #### Parameters:
 
@@ -27,7 +28,7 @@ iex ('$module="Bookmarks";$user="stadub";$repo="PowershellScripts"'+(new-object 
 
 ---------------------
 
-### Direct download script file
+### Script file download
 
 For the cases when he module represent only one file it can be downloaded directly.
 
