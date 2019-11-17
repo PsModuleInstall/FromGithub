@@ -4,26 +4,29 @@ This repository contain script allows to download module directly from the GitHu
 ---------------------
 
 
-## Used Parameters:
-`moduleName` - subfolder with module content. Live empty if the root repo folder is the module folder(contain psd1/psm1 files)
-
-`username` - Github accout user or company name
-
-`repoName` - user repository account
-
-
-# Downloading module from Github repository
+### Downloading module from Github repository
 
 ```powershell
 iex ('$module="{moduleName};$user="{username}";$repo="{repoName}";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1'))
 ```
 
-Usage Example: Downloading `Bookmarks` module from `PowershellScripts` repo
+Parameters:
+* `moduleName` - subfolder with module content. Live empty if the root repo folder is the module folder(contain psd1/psm1 files)
+
+* `username` - Github accout user or company name
+
+* `repoName` - user repository account
+
+
+Example: Downloading `Bookmarks` module from `PowershellScripts` repo
 ```powershell
 iex ('$module="Bookmarks";$user="stadub";$repo="PowershellScripts"'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1'))
 ```
 
-## For the cases when he module represent only one file it can be downloaded directly
+
+### Direct download script file: 
+
+For the cases when he module represent only one file it can be downloaded directly.
 
 Direct download script file: 
 
