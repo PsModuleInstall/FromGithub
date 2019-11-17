@@ -1,15 +1,10 @@
 
-# The `install.ps1` script intended to perform direct module installation from the GitHub repo  
+This reporitory contain script allows to download module diretly from the GitHub repo  
 
 ---------------------
 
-## 📃 Direct download Module instalation template:
 
-```powershell
-iex ('$module="{moduleName};$user="{username}";$repo="{repoName}";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/PSModuleInstallScript/master/install.ps1'))
-```
-
-## 📘 Parameters:
+## Used Parameters:
 `moduleName` - subfolder with module content. Live empty if the root repo folder is the module folder(contain psd1/psm1 files)
 
 `username` - Github accout user or company name
@@ -17,8 +12,26 @@ iex ('$module="{moduleName};$user="{username}";$repo="{repoName}";'+(new-object 
 `repoName` - user repository account
 
 
+# Downloading module from Github repository
 
-## ⚡ Example:
 ```powershell
-iex ('$module="Bookmarks";$user="stadub";$repo="PowershellScripts"'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/PSModuleInstallScript/master/install.ps1'))
+iex ('$module="{moduleName};$user="{username}";$repo="{repoName}";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1'))
+```
+
+Usage Example: Downloading `Bookmarks` module from `PowershellScripts` repo
+```powershell
+iex ('$module="Bookmarks";$user="stadub";$repo="PowershellScripts"'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1'))
+```
+
+## For the cases when he module represent only one file it can be downloaded directly
+
+Direct download script file: 
+
+```powershell
+iex('$module="{moduleName};$user="{username}";$repo="{repoName}";$folder="$pwd";(new-object net.webclient).DownloadFile("https://raw.githubusercontent.com/$user/$repo/master/$module","$folder\$module")')
+```
+
+Example: Downloading `install.ps1` script 
+```powershell
+iex('$user="PsModuleInstall";$repo="InstallFromGithub";$module="install.ps1";$folder="$pwd";(new-object net.webclient).DownloadFile("https://raw.githubusercontent.com/$user/$repo/master/$module","$folder\$module")')
 ```
