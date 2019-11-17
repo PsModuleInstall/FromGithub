@@ -22,7 +22,7 @@ $moduleFolder= Join-Path $ProfileModulePath $moduleName;
 
 if (Test-Path $moduleFolder) {
     throw "Unable to install module ''$moduleName''. 
-    Directory with the same name alredy exist in the Profile directory.
+    Directory with the same name alredy exist in the Profile directory ''$ProfileModulePath''.
     Please rename exisitng module folder and try again. 
     "
 }
