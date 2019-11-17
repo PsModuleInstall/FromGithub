@@ -1,6 +1,13 @@
-;$moduleToLoad=$module;
+;$ghUser=$user;
+$RepoName = $repo;
 
-$RepoName = 'PowershellScripts';
+
+if(Test-Path variable:module){
+$moduleToLoad=$module;
+}
+else{
+$moduleToLoad="";
+}
 
 $tempFile= "$env:TEMP\$RepoName";
 
@@ -9,9 +16,9 @@ if (!(Test-Path $ProfileModulePath)) {
     New-Item -ItemType Directory -Path $ProfileModulePath;
 }
 
-$moduleName= Split-Path $moduleToLoad -leaf
+$moduleName= Split-Path $moduleToLoad -leaf;
 
-$moduleFolder= Join-Path $ProfileModulePath $moduleName
+$moduleFolder= Join-Path $ProfileModulePath $moduleName;
 
 if (Test-Path $moduleFolder) {
     throw "Unable to install module ''$moduleName''. 
@@ -21,11 +28,11 @@ if (Test-Path $moduleFolder) {
 }
 
 
-$client = New-Object System.Net.WebClient
+$client = New-Object System.Net.WebClient;
 
-$url = [uri]"https://github.com/stadub/$RepoName/archive/master.zip"
+$url = [uri]"https://github.com/$ghUser/$RepoName/archive/master.zip";
 
-$file =  "${tempFile}.zip"
+$file =  "${tempFile}.zip";
 
 try {
 
@@ -39,27 +46,27 @@ try {
              ("Downloading Module: {0} of {1}" -f $eventargs.BytesReceived, $eventargs.TotalBytesToReceive) `
              -PercentComplete $eventargs.ProgressPercentage 
         }
-    }
+    };
 
     $completeEventArgs = @{
         InputObject = $client
         EventName = 'DownloadFileCompleted'
         SourceIdentifier = 'ModuleDownloadCompleted'
-    }
+    };
 
      Register-ObjectEvent @progressEventArgs
      Register-ObjectEvent @completeEventArgs
  
-     $client.DownloadFileAsync($url, $file)
+     $client.DownloadFileAsync($url, $file);
 
      Wait-Event -SourceIdentifier ModuleDownloadCompleted
 }
 catch [System.Net.WebException]  
 {  
-    Write-Host("Cannot download $url")  
+    Write-Host("Cannot download $url");
 } 
 finally {
-     $client.dispose()
+     $client.dispose();
      Unregister-Event -SourceIdentifier ModuleDownload
      Unregister-Event -SourceIdentifier ModuleDownloadCompleted
 }
