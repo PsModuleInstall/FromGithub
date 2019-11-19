@@ -9,7 +9,9 @@ else{
 $moduleToLoad="";
 }
 
-$tempFile= "$env:TEMP\$RepoName";
+$tmpDir = [System.IO.Path]::GetTempPath()
+
+$tempFile= "$tmpDir\$RepoName";
 
 $ProfileModulePath = $env:PSModulePath.split(';')[0];
 if (!(Test-Path $ProfileModulePath)) {
