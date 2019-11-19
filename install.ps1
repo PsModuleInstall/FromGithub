@@ -9,7 +9,7 @@ if(Test-Path variable:module){
 }
 else{
     $moduleName = $repo;
-     $moduleToLoad=$moduleName;
+    $moduleToLoad = ""
 }
 
 $tmpDir = [System.IO.Path]::GetTempPath();
@@ -88,7 +88,7 @@ finally {
 Write-Progress -Activity "Module Installation"  -Status "Unpacking Module" -PercentComplete 40
 
 Write-Progress -Activity "Module Installation"  -Status "Copy Module to PowershellModules folder" -PercentComplete 50
-Move-Item -Path "${tempFile}\$RepoName-master\$moduleToLoad" -Destination "$ProfileModulePath"
+Move-Item -Path "${tempFile}\$RepoName-master\$moduleToLoad" -Destination "$moduleFolder"
 Write-Progress -Activity "Module Installation"  -Status "Copy Module to PowershellModules folder" -PercentComplete 60
 
 Write-Progress -Activity "Module Installation"  -Status "Finishing Installation and Cleanup " -PercentComplete 80
