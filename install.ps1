@@ -9,7 +9,7 @@ else{
 $moduleToLoad="";
 }
 
-$tmpDir = [System.IO.Path]::GetTempPath()
+$tmpDir = [System.IO.Path]::GetTempPath();
 
 $tempFile= "$tmpDir\$RepoName";
 
