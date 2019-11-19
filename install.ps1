@@ -8,7 +8,7 @@ if(Test-Path variable:module){
     
 }
 else{
-    $moduleToLoad="";
+    $moduleToLoad=$moduleName;
     $moduleName = $repo;
 }
 
