@@ -8,8 +8,8 @@ if(Test-Path variable:module){
     
 }
 else{
-    $moduleToLoad=$moduleName;
     $moduleName = $repo;
+     $moduleToLoad=$moduleName;
 }
 
 $tmpDir = [System.IO.Path]::GetTempPath();
