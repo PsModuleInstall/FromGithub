@@ -19,7 +19,7 @@ Templates code provided below you can also find in the file `InstallTemplates.ps
 #### Scritp template:
 
 ```powershell
-iex ('$module="{moduleName};$user="{username}";$repo="{repoName}";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1'))
+iex ('$module="{moduleName}";$user="{username}";$repo="{repoName}";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1'))
 ```
 
 #### Example: Downloading `Bookmarks` module from `PowershellScripts` repo
@@ -46,7 +46,7 @@ Direct download script file:
 #### Scritp template:
 
 ```powershell
-iex('$module="{moduleName};$user="{username}";$repo="{repoName}";$folder="$pwd";(new-object net.webclient).DownloadFile("https://raw.githubusercontent.com/$user/$repo/master/$module","$folder\$module")')
+iex('$module="{moduleName}";$user="{username}";$repo="{repoName}";$folder="$pwd";(new-object net.webclient).DownloadFile("https://raw.githubusercontent.com/$user/$repo/master/$module","$folder\$module")')
 ```
 
 #### Example: Downloading `install.ps1` script
