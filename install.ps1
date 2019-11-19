@@ -97,4 +97,4 @@ Write-Progress -Activity "Module Installation"  -Status "Module installed sucess
 
 Write-Host "Module installation complete"
 
-Write-Host "Use ''Import-Module $module'' to start using module"
+Write-Host "Use ''Import-Module $moduleName'' to start using module"
