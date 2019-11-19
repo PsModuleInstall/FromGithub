@@ -3,10 +3,13 @@ $RepoName = $repo;
 
 
 if(Test-Path variable:module){
-$moduleToLoad=$module;
+    $moduleToLoad=$module;
+    $moduleName= Split-Path $moduleToLoad -leaf;
+    
 }
 else{
-$moduleToLoad="";
+    $moduleToLoad="";
+    $moduleName = $repo;
 }
 
 $tmpDir = [System.IO.Path]::GetTempPath();
@@ -18,7 +21,6 @@ if (!(Test-Path $ProfileModulePath)) {
     New-Item -ItemType Directory -Path $ProfileModulePath;
 }
 
-$moduleName= Split-Path $moduleToLoad -leaf;
 
 $moduleFolder= Join-Path $ProfileModulePath $moduleName;
 
