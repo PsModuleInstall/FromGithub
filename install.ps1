@@ -17,14 +17,14 @@ param (
     [Parameter(Position = 2, ParameterSetName = 'Positional', Mandatory=$false, ValueFromPipelineByPropertyName  = $True, 
     HelpMessage = 'Repository Folder')]
     [Alias("Module")]
-    [string] $ModulePath = "",
+    [string] $ModulePath = $null,
 
     [Parameter(Position = 3, ParameterSetName = 'RepoInfo', Mandatory = $false, ValueFromPipelineByPropertyName  = $True, 
     HelpMessage = 'Repository branch')]
     [string]$Branch = "master"
 
 )
-
+#>
 function FunctionName {
     
     #check params
