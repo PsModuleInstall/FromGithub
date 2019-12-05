@@ -260,6 +260,9 @@ else{
     $moduleToLoad = "";
 }
 
+if( ([string]::IsNullOrWhitespace($Branch)) ){
+    $Branch = "master";
+}
 
 $tempFile = Get-SavePath -RepoName $Repo;
 $moduleFolder = Get-ModuleInstallFolder -ModuleName $moduleName;
