@@ -43,14 +43,20 @@ Direct download script file:
 
 * `repoName` - user repository account
 
+#### Interactive mode
+
+```powershell
+iex(iex('(new-object net.webclient).DownloadString("https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1")'))
+```
+
 #### Scritp template:
 
 ```powershell
-iex('$module="{moduleName}";$user="{username}";$repo="{repoName}";$folder="$pwd";(new-object net.webclient).DownloadFile("https://raw.githubusercontent.com/$user/$repo/master/$module","$folder\$module")')
+iex('$module="{moduleName}";$user="{username}";$repo="{repoName}";$folder="$pwd";(new-object net.webclient).DownloadFile("https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1","$folder\$module")')
 ```
 
 #### Example: Downloading `install.ps1` script
 
 ```powershell
-iex('$user="PsModuleInstall";$repo="InstallFromGithub";$module="install.ps1";$folder="$pwd";(new-object net.webclient).DownloadFile("https://raw.githubusercontent.com/$user/$repo/master/$module","$folder\$module")')
+iex('$user="PsModuleInstall";$repo="InstallFromGithub";$module="install.ps1";$folder="$pwd";(new-object net.webclient).DownloadFile("https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1","$folder\$module")')
 ```
