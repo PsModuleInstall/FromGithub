@@ -1,87 +1,89 @@
-[cmdletbinding(DefaultParameterSetName = 'RepoInfo' )]
-param (
-    [Parameter(Position = 0, ParameterSetName = 'Url', ValueFromPipeline = $True, Mandatory = $true)]
-    [string]$Url,
-  
+# capture variable values
+[string]$Url = Get-Variable -ValueOnly -ErrorAction SilentlyContinue Url;
+[string]$User = Get-Variable -ValueOnly -ErrorAction SilentlyContinue User;
+[string]$Repo = Get-Variable -ValueOnly -ErrorAction SilentlyContinue Repo;
+[string]$Branch = Get-Variable -ValueOnly -ErrorAction SilentlyContinue Branch;
 
-    [Parameter(Position = 0, ParameterSetName = 'RepoInfo', Mandatory = $true, ValueFromPipelineByPropertyName  = $True, 
-    HelpMessage = 'Github user name')]
-    [Alias("GithubUser")]
-    [string]$User,
-
-    [Parameter(Position = 1, ParameterSetName = 'RepoInfo', Mandatory = $true, ValueFromPipelineByPropertyName  = $True, 
-    HelpMessage = 'Repository name')]
-    [Alias("Repository")]
-    [string]$Repo,
-
-    [Parameter(Position = 2, ParameterSetName = 'Positional', Mandatory=$false, ValueFromPipelineByPropertyName  = $True, 
-    HelpMessage = 'Repository Folder')]
-    [Alias("Module")]
-    [string] $ModulePath = $null,
-
-    [Parameter(Position = 3, ParameterSetName = 'RepoInfo', Mandatory = $false, ValueFromPipelineByPropertyName  = $True, 
-    HelpMessage = 'Repository branch')]
-    [string]$Branch = "master"
-
-)
-#>
-function FunctionName {
-    
-    #check params
-    if( [string]::IsNullOrWhitespace( $GithubUser) ){
-        $user = $GithubUser;
-    }
-
-    #check params
-    if( [string]::IsNullOrWhitespace( $GithubUser) ){
-        $user = $GithubUser;
-    }
-
-    if( [string]::IsNullOrWhitespace( $Repository) ){
-        $repo = $Repository;
-    }
-
-    if( [string]::IsNullOrWhitespace( $ModulePath) ){
-        $module = $ModulePath;
-    }
-
-    # check variables
-    $module="{moduleName}";$user="{username}";$repo="{repoName}"
-
-    if( [string]::IsNullOrWhitespace( $repo) ){
-        $repo = $repo;
-    }
-
-    if ( Test-Path variable:moduleName ){
-        $user = $GithubUser;
-    }
+#set default values for Branch and ModulePath variables
+$Branch =  ({"master"}, {$Branch} )[ "x$Branch"-eq "x" ]
+$ModulePath =  ({""}, {$ModulePath} )[ "x$ModulePath"-eq "x" ]
 
 
-    if ( Test-Path variable:moduleName ){
-        $module = $moduleName;
-    }
-    $module="{moduleName}";$user="{username}";$repo="{repoName}"
+# in case when both Url and Repo variables are empty - request params in the interactive mode
+if ( "x$Url" -eq "x" -and "x$Repo" -eq "x" ) {
 
-    if(Test-Path variable:repoName){
-        $repo = $repoName;
-    }
-    if(Test-Path variable:module){
-        $module = $modulePath;
-    }
-
-    # convert values
-    if( -not ([string]::IsNullOrWhitespace($module)) ){
-        $moduleToLoad = $module;
-        $moduleName = Split-Path $moduleToLoad -leaf;
-        
-    }
-    else{
-        $moduleName = $repoName;
-        $moduleToLoad = "";
+    $result = Read-ParamMode
+    switch ($result)
+    {
+        0 {
+            $Url = $host.ui.Prompt($null,$null,"Github Module Url")
+        }
+        1 { 
+            $res = Read-RepoInfo -User $User -Repo $Repo -ModulePath $ModulePath  -Branch $Branch
+            $User = $res['User'];
+            $Repo = $res['Repo'];
+            $Branch = $res['Branch'];
+            $ModulePath = $res['ModulePath'];
+         }
     }
 }
 
-function Get-SavePath {
+
+function Read-ParamMode {
+    $c_url = New-Object System.Management.Automation.Host.ChoiceDescription '&Url', 'Define module repo path via repo URl'
+    $c_param = New-Object System.Management.Automation.Host.ChoiceDescription '&Params', 'Define module repo path one by one (user/repo/path)'
+    $options = [System.Management.Automation.Host.ChoiceDescription[]]($c_url, $c_param)
+
+    $message = 'Select Module repo enter mode'
+    return $host.ui.PromptForChoice($null, $message, $options, 1)
+}
+
+function Read-RepoInfo {
+    param (
+        [string]$User,
+        [string]$Repo,
+        [string]$ModulePath,
+        [string]$Branch
+    )
+    $p_user = New-Object System.Management.Automation.Host.FieldDescription 'User ['+$User+']'
+    $p_user.Label="Github user name"
+    $p_user.IsMandatory=$true
+    $p_user.SetParameterType([string])
+    $p_user.DefaultValue = $User
+    
+    $p_repo = New-Object System.Management.Automation.Host.FieldDescription 'Repository ['+$Repo+']'
+    $p_repo.HelpMessage="Github Repository"
+    $p_repo.SetParameterType([string])
+    $p_user.DefaultValue = $Repo
+
+    $p_path = New-Object System.Management.Automation.Host.FieldDescription 'RepoFolder (empty for root) [' +$ModulePath +']'
+    $p_path.Label="Repository Folder [Live empty for root repo folder]"
+    $p_path.HelpMessage="Repository Folder [Live empty for root repo folder]"
+    $p_path.SetParameterType([string])
+    $p_path.DefaultValue = $ModulePath
+
+    $p_branch = New-Object System.Management.Automation.Host.FieldDescription 'Branch ['+$Branch+']'
+    $p_branch.HelpMessage="Repository branch [Default:master]"
+    $p_branch.SetParameterType([string])
+    $p_branch.DefaultValue = $Branch
+
+
+    $res = $host.ui.Prompt($null,"Github Module Repository",@($p_user, $p_repo, $p_path, $p_branch))
+
+    If ( ! [string]::IsNullOrWhitespace($res[$p_user.Name]) ) { $res[$p_user.Name] } Else {$res[$p_user.Name]=$p_user.DefaultValue} 
+    If ( ! [string]::IsNullOrWhitespace($res[$p_repo.Name]) ) { $res[$p_repo.Name] } Else {$res[$p_repo.Name]=$p_repo.DefaultValue} 
+    If ( ! [string]::IsNullOrWhitespace($res[$p_path.Name]) ) { $res[$p_path.Name] } Else {$res[$p_path.Name]=$p_path.DefaultValue} 
+    If ( ! [string]::IsNullOrWhitespace($res[$p_branch.Name]) ) { $res[$p_branch.Name] } Else {$res[$p_branch.Name]=$p_branch.DefaultValue} 
+
+    return @{
+        User = $res[$p_user.Name]
+        Repo = $res[$p_repo.Name]
+        Branch = $res[$p_branch.Name]
+        ModulePath = $res[$p_path.Name]
+    }
+}
+
+function Get-LocalTempPath {
     param (
         [string] $RepoName
     )
@@ -178,25 +180,31 @@ function Expand-ModuleZip {
     Write-Progress -Activity "Module Installation"  -Status "Unpack Module" -PercentComplete 40;
 }
 
-function Move-ModuleAndFinish {
+function Move-ModuleFiles {
     param (
         [string] $ArchiveFolder,
         [string] $Module,
-        [string] $DestFolder
+        [string] $DestFolder,
+        [string] $ModuleHash
     )
 
-
+    Write-Progress -Activity "Module Installation"  -Status "Store computed moduel hash" -PercentComplete 40;
+    Out-File -InputObject $ModuleHash -Path "${ArchiveFolder}\*-master\$Module\hash" 
     
     Write-Progress -Activity "Module Installation"  -Status "Copy Module to PowershellModules folder" -PercentComplete 50;
     Move-Item -Path "${ArchiveFolder}\*-master\$Module" -Destination "$DestFolder";
     Write-Progress -Activity "Module Installation"  -Status "Copy Module to PowershellModules folder" -PercentComplete 60;
+}
 
+function Invoke-Cleanup{
+    param (
+        [string] $ArchiveFolder
+    )
     Write-Progress -Activity "Module Installation"  -Status "Finishing Installation and Cleanup " -PercentComplete 80;
     Remove-Item "${ArchiveFolder}*" -Recurse -ErrorAction SilentlyContinue;
     Write-Progress -Activity "Module Installation"  -Status "Module installed sucessaful";
-
-
 }
+
 
 function Write-Finish {
     param (
@@ -264,7 +272,7 @@ if( ([string]::IsNullOrWhitespace($Branch)) ){
     $Branch = "master";
 }
 
-$tempFile = Get-SavePath -RepoName $Repo;
+$tempFile = Get-LocalTempPath -RepoName $Repo;
 $moduleFolder = Get-ModuleInstallFolder -ModuleName $moduleName;
 
 $downloadUrl = [uri]"https://github.com/${User}/${Repo}/archive/${Branch}.zip";
@@ -273,10 +281,13 @@ $file =  "${tempFile}.zip";
 
 Receive-Module -Url $downloadUrl -File $file;
 
+$moduleHash = Get-FileHash -Algorithm SHA384 -Path $file
+
 $archiveName = $tempFile;
 
 Expand-ModuleZip -Archive $archiveName;
 
-Move-ModuleAndFinish -ArchiveFolder $archiveName -Module $moduleToLoad -DestFolder $moduleFolder;
+Move-ModuleFiles -ArchiveFolder $archiveName -Module $moduleToLoad -DestFolder $moduleFolder;
+Invoke-Cleanup -ArchiveFolder $archiveName
 
 Write-Finish -moduleName $moduleName
