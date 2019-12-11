@@ -9,25 +9,6 @@ $Branch =  ({"master"}, {$Branch} )[ "x$Branch"-eq "x" ]
 $ModulePath =  ({""}, {$ModulePath} )[ "x$ModulePath"-eq "x" ]
 
 
-# in case when both Url and Repo variables are empty - request params in the interactive mode
-if ( "x$Url" -eq "x" -and "x$Repo" -eq "x" ) {
-
-    $result = Read-ParamMode
-    switch ($result)
-    {
-        0 {
-            $Url = $host.ui.Prompt($null,$null,"Github Module Url")
-        }
-        1 { 
-            $res = Read-RepoInfo -User $User -Repo $Repo -ModulePath $ModulePath  -Branch $Branch
-            $User = $res['User'];
-            $Repo = $res['Repo'];
-            $Branch = $res['Branch'];
-            $ModulePath = $res['ModulePath'];
-         }
-    }
-}
-
 
 function Read-ParamMode {
     $c_url = New-Object System.Management.Automation.Host.ChoiceDescription '&Url', 'Define module repo path via repo URl'
@@ -249,7 +230,27 @@ function Convert-GitHubUrl(){
 }
 
 
+# in case when both Url and Repo variables are empty - request params in the interactive mode
+if ( "x$Url" -eq "x" -and "x$Repo" -eq "x" ) {
 
+    $result = Read-ParamMode
+    switch ($result)
+    {
+        0 {
+            $Url = $host.ui.Prompt($null,$null,"Github Module Url")
+        }
+        1 { 
+            $res = Read-RepoInfo -User $User -Repo $Repo -ModulePath $ModulePath  -Branch $Branch
+            $User = $res['User'];
+            $Repo = $res['Repo'];
+            $Branch = $res['Branch'];
+            $ModulePath = $res['ModulePath'];
+         }
+    }
+}
+
+
+# try convert url to fully cvalified path
 if( -not [string]::IsNullOrWhitespace($Url) ){
     $res = Convert-GitHubUrl -Url $Url
     $User = $res['User'];
