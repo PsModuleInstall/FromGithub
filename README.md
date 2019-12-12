@@ -1,15 +1,14 @@
+# Powershell module GitHub installer
+ 
 This repository contain script intendend to download Powershell module directly from the GitHub repo
 
-Next instalation modes are currently supported:
+Powershell module path can be set in one of the next ways:
 
-* Script mode with predifined repo values
-* Interactive mode
+1. Module GitHub UserName, Repository, Branch(not required), Folder(optional)
+1. Github Folder Url
+2. Interactive mode
 
-## Script Mode
-
-Can be set ether Github Url or Repo/Username/Branch/Folder
-
-### RepoPath Parameters
+### GitHub Powershell Module parameters
 
 * `moduleName` - subfolder with module content. Live empty if the root repo folder is the module folder(contain psd1/psm1 files)
 
@@ -17,10 +16,26 @@ Can be set ether Github Url or Repo/Username/Branch/Folder
 
 * `repoName` - user repository account
 
-#### Script Templates
+#### Script Template
 
 ```powershell
 iex ('$module="{moduleName}";$user="{username}";$repo="{repoName}";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1'))
+```
+
+#### Example: Downloading `Bookmarks` module from `PowershellScripts` repo
+
+```powershell
+iex ('$module="Bookmarks";$user="stadub";$repo="PowershellScripts";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1'))
+```
+
+### GitHub Powershell Module Url
+
+* `url` - url to the repo-folder
+
+#### Script Template
+
+```powershell
+iex ('$url="{url}";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1'))
 ```
 
 #### Example: Downloading `Bookmarks` module from `PowershellScripts` repo
@@ -43,10 +58,15 @@ iex ('$url="{url}";'+(new-object net.webclient).DownloadString('https://raw.gith
 iex ('$url="https://github.com/stadub/PowershellScripts/tree/7-Zip-Release-1.1/7Zip";'+(new-object net.webclient).DownloadString('https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1'))
 ```
 
+
 ## Interactive mode
 
+Interactive mode represents one of modes defined above.
+But allow to fill in info in wizard mode 
+
+
 ```powershell
-iex(iex('(new-object net.webclient).DownloadString("https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1")'))
+iex('(new-object net.webclient).DownloadString("https://raw.githubusercontent.com/PsModuleInstall/InstallFromGithub/master/install.ps1")')
 ```
 
 <!-- ---------------------
