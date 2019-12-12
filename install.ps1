@@ -1,17 +1,22 @@
 # capture variable values
 [string]$Url = Get-Variable -ValueOnly -ErrorAction SilentlyContinue Url;
+
+#[string]$FileUrl = Get-Variable -ValueOnly -ErrorAction SilentlyContinue Url;
+
+
 [string]$User = Get-Variable -ValueOnly -ErrorAction SilentlyContinue User;
 [string]$Repo = Get-Variable -ValueOnly -ErrorAction SilentlyContinue Repo;
 [string]$Branch = Get-Variable -ValueOnly -ErrorAction SilentlyContinue Branch;
+[string]$ModulePath = Get-Variable -ValueOnly -ErrorAction SilentlyContinue Module;
 
 #set default values for Branch and ModulePath variables
-$Branch =  ({"master"}, {$Branch} )[ "x$Branch"-eq "x" ]
-$ModulePath =  ({""}, {$ModulePath} )[ "x$ModulePath"-eq "x" ]
 
-
+If ( [string]::IsNullOrWhitespace($Branch) ) { $Branch = "master" }
+If ( [string]::IsNullOrWhitespace($ModulePath) ) { $ModulePath = "" }
 
 function Read-ParamMode {
     $c_url = New-Object System.Management.Automation.Host.ChoiceDescription '&Url', 'Define module repo path via repo URl'
+    #$c_file_url = New-Object System.Management.Automation.Host.ChoiceDescription '&Url', 'Define powershell script file path via URl'
     $c_param = New-Object System.Management.Automation.Host.ChoiceDescription '&Params', 'Define module repo path one by one (user/repo/path)'
     $options = [System.Management.Automation.Host.ChoiceDescription[]]($c_url, $c_param)
 
@@ -138,6 +143,8 @@ function Receive-Module {
         Unregister-Event -SourceIdentifier ModuleDownload;
         Unregister-Event -SourceIdentifier ModuleDownloadCompleted;
     }
+    Write-Debug "Unblock downloaded file access $File";
+    Unblock-File -Path $File;
 }
 
 function Expand-ModuleZip {
@@ -147,8 +154,6 @@ function Expand-ModuleZip {
 
     #avoid errors on already existing file
     try {
-        Write-Debug "Unblock downloaded file access $Archive";
-        Unblock-File -Path "${Archive}.zip";
 
         Write-Progress -Activity "Module Installation"  -Status "Unpack Module" -PercentComplete 0;
         
@@ -168,12 +173,12 @@ function Move-ModuleFiles {
         [string] $DestFolder,
         [string] $ModuleHash
     )
-
+    $path = (Resolve-Path -Path "${ArchiveFolder}\*-master\$Module").Path
     Write-Progress -Activity "Module Installation"  -Status "Store computed moduel hash" -PercentComplete 40;
-    Out-File -InputObject $ModuleHash -Path "${ArchiveFolder}\*-master\$Module\hash" 
+    Out-File -InputObject $ModuleHash -FilePath "$path\hash" 
     
     Write-Progress -Activity "Module Installation"  -Status "Copy Module to PowershellModules folder" -PercentComplete 50;
-    Move-Item -Path "${ArchiveFolder}\*-master\$Module" -Destination "$DestFolder";
+    Move-Item -Path $path -Destination "$DestFolder";
     Write-Progress -Activity "Module Installation"  -Status "Copy Module to PowershellModules folder" -PercentComplete 60;
 }
 
@@ -231,7 +236,7 @@ function Convert-GitHubUrl(){
 
 
 # in case when both Url and Repo variables are empty - request params in the interactive mode
-if ( "x$Url" -eq "x" -and "x$Repo" -eq "x" ) {
+if ( "x$Url" -eq "x" -and "x$Repo" -eq "x" -and "x$FileUrl" -eq "x" ) {
 
     $result = Read-ParamMode
     switch ($result)
@@ -246,7 +251,19 @@ if ( "x$Url" -eq "x" -and "x$Repo" -eq "x" ) {
             $Branch = $res['Branch'];
             $ModulePath = $res['ModulePath'];
          }
+        2 {
+            $FileUrl = $host.ui.Prompt($null,$null,"Github File Url")
+        }
     }
+}
+
+# try convert url to fully cvalified path
+if( -not [string]::IsNullOrWhitespace($Url) ){
+    $res = Convert-GitHubUrl -Url $Url
+    $User = $res['User'];
+    $Repo = $res['Repo'];
+    $Branch = $res['Branch'];
+    $ModulePath = $res['ModulePath'];
 }
 
 
@@ -273,6 +290,8 @@ if( ([string]::IsNullOrWhitespace($Branch)) ){
     $Branch = "master";
 }
 
+$host.ui.WriteLine([ConsoleColor]::Green, [ConsoleColor]::Black, "Start downloading Module ${moduleName} from GitHub Repository:${Repo} User:${User} Branch:${Branch}")
+
 $tempFile = Get-LocalTempPath -RepoName $Repo;
 $moduleFolder = Get-ModuleInstallFolder -ModuleName $moduleName;
 
@@ -288,7 +307,7 @@ $archiveName = $tempFile;
 
 Expand-ModuleZip -Archive $archiveName;
 
-Move-ModuleFiles -ArchiveFolder $archiveName -Module $moduleToLoad -DestFolder $moduleFolder;
+Move-ModuleFiles -ArchiveFolder $archiveName -Module $moduleToLoad -DestFolder $moduleFolder -ModuleHash "$($moduleHash.Hash)";
 Invoke-Cleanup -ArchiveFolder $archiveName
 
 Write-Finish -moduleName $moduleName
