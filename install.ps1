@@ -1,3 +1,7 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+$PSDefaultParameterValues['*:ErrorAction']='Stop'
+
 # capture variable values
 [string]$Url = Get-Variable -ValueOnly -ErrorAction SilentlyContinue Url;
 
