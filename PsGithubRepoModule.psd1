@@ -105,10 +105,12 @@ PrivateData = @{
         ProjectUri = 'https://github.com/PsModuleInstall/FromGithub/tree/ModuleManifest/install.ps1'
 
         # A URL to an icon representing this module.
-        # IconUri = ''
+        # A URL to an icon representing this module.
+        IconUri = 'https://raw.githubusercontent.com/PsModuleInstall/FromGithub/master/Bookmarks/Assets/Icon.ico'
+
 
         # ReleaseNotes of this module
-        ReleaseNotes = 'Update README.md'
+        ReleaseNotes = 'First release: module to export any github repo as module'
 
     } # End of PSData hashtable
 
