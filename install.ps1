@@ -32,7 +32,7 @@ function Read-RepoInfo {
         [string]$Branch
     )
     $p_user = New-Object System.Management.Automation.Host.FieldDescription 'User ['+$User+']'
-    $p_user.Label="Github user name"
+    $p_user.Label="Github repo user name"
     $p_user.IsMandatory=$true
     $p_user.SetParameterType([string])
     $p_user.DefaultValue = $User
