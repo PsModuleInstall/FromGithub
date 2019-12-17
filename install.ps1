@@ -15,6 +15,8 @@ $PSDefaultParameterValues['*:ErrorAction']='Stop'
 
 [string]$ModuleName = Get-Variable -ValueOnly -ErrorAction SilentlyContinue ModuleName;
 
+[bool]$IsFile = ( Get-Variable -ValueOnly -ErrorAction SilentlyContinue IsFileScriptModule) -eq $true;
+
 #set default values for Branch and ModulePath variables
 
 If ( [string]::IsNullOrWhitespace($Branch) ) { $Branch = "master" }
@@ -32,46 +34,52 @@ function Read-ParamMode {
 
 function Read-RepoInfo {
     param (
-        [string]$User,
-        [string]$Repo,
-        [string]$ModulePath,
-        [string]$Branch
+        [string]$DefaultUser,
+        [string]$DefaultRepo,
+        [string]$DefaultModulePath,
+        [string]$DefaultBranch
     )
-    $p_user = New-Object System.Management.Automation.Host.FieldDescription 'User ['+$User+']'
+
+    $p_user = New-Object System.Management.Automation.Host.FieldDescription "User [$User]"
     $p_user.Label="Github user name"
     $p_user.IsMandatory=$true
     $p_user.SetParameterType([string])
-    $p_user.DefaultValue = $User
+    $p_user.DefaultValue = $DefaultUser
     
-    $p_repo = New-Object System.Management.Automation.Host.FieldDescription 'Repository ['+$Repo+']'
+    $p_repo = New-Object System.Management.Automation.Host.FieldDescription "Repository [$DefaultRepo]"
     $p_repo.HelpMessage="Github Repository"
     $p_repo.SetParameterType([string])
-    $p_user.DefaultValue = $Repo
+    $p_repo.DefaultValue = $DefaultRepo
 
-    $p_path = New-Object System.Management.Automation.Host.FieldDescription 'RepoFolder (empty for root) [' +$ModulePath +']'
+    $p_path = New-Object System.Management.Automation.Host.FieldDescription "RepoFolder (empty for root) [$DefaultModulePath]"
     $p_path.Label="Repository Folder [Live empty for root repo folder]"
     $p_path.HelpMessage="Repository Folder [Live empty for root repo folder]"
     $p_path.SetParameterType([string])
-    $p_path.DefaultValue = $ModulePath
+    $p_path.DefaultValue = $DefaultModulePath
 
-    $p_branch = New-Object System.Management.Automation.Host.FieldDescription 'Branch ['+$Branch+']'
+    $p_branch = New-Object System.Management.Automation.Host.FieldDescription "Branch [$DefaultBranch]"
     $p_branch.HelpMessage="Repository branch [Default:master]"
     $p_branch.SetParameterType([string])
-    $p_branch.DefaultValue = $Branch
+    $p_branch.DefaultValue = $DefaultBranch
 
 
     $res = $host.ui.Prompt($null,"Github Module Repository",@($p_user, $p_repo, $p_path, $p_branch))
 
-    If ( ! [string]::IsNullOrWhitespace($res[$p_user.Name]) ) { $res[$p_user.Name] } Else {$res[$p_user.Name]=$p_user.DefaultValue} 
-    If ( ! [string]::IsNullOrWhitespace($res[$p_repo.Name]) ) { $res[$p_repo.Name] } Else {$res[$p_repo.Name]=$p_repo.DefaultValue} 
-    If ( ! [string]::IsNullOrWhitespace($res[$p_path.Name]) ) { $res[$p_path.Name] } Else {$res[$p_path.Name]=$p_path.DefaultValue} 
-    If ( ! [string]::IsNullOrWhitespace($res[$p_branch.Name]) ) { $res[$p_branch.Name] } Else {$res[$p_branch.Name]=$p_branch.DefaultValue} 
+    $c_isFile = $host.ui.PromptForChoice($null, 'Select Module type:', @("&File", "&Module Directory" ) , 1)
+    $isFile = ($c_isFile -eq 0)
 
-    return @{
-        User = $res[$p_user.Name]
-        Repo = $res[$p_repo.Name]
-        Branch = $res[$p_branch.Name]
-        ModulePath = $res[$p_path.Name]
+    If (  [string]::IsNullOrWhitespace($res[$p_user.Name]) ) {$res[$p_user.Name]=$p_user.DefaultValue} 
+    If (  [string]::IsNullOrWhitespace($res[$p_repo.Name]) ) {$res[$p_repo.Name]=$p_repo.DefaultValue} 
+    If (  [string]::IsNullOrWhitespace($res[$p_path.Name]) ) {$res[$p_path.Name]=$p_path.DefaultValue} 
+    If (  [string]::IsNullOrWhitespace($res[$p_branch.Name]) ) {$res[$p_branch.Name]=$p_branch.DefaultValue} 
+
+
+    return @{ 
+        User = $res[$p_user.Name];
+        Repo = $res[$p_repo.Name];
+        Branch = $res[$p_branch.Name];
+        ModulePath = $res[$p_path.Name];
+        IsFile = $isFile;
     }
 }
 
@@ -175,7 +183,8 @@ function Expand-ModuleZip {
     param (
         [string] $Archive,
         [string] $Module,
-        [string] $DestFolder
+        [string] $DestFolder,
+        [bool] $IsFile
     )
 
     #avoid errors on already existing file
@@ -192,6 +201,18 @@ function Expand-ModuleZip {
         $baseDir = $zip.Entries[0].FullName;
         $modulePath = $baseDir + $Module;
         $slash = [System.IO.Path]::DirectorySeparatorChar;
+
+        if($IsFile){
+            $entry = $zip.GetEntry($modulePath);
+
+            if( -not (Test-Path $DestFolder)){
+                New-Item -path $DestFolder -ItemType Directory;
+            }
+
+            $destinationPath = $DestFolder + $slash + $entry.Name;
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destinationPath, $true);
+            return;
+        }
 
         foreach ($entry in $zip.Entries) {
             if($entry.FullName.StartsWith($modulePath, [StringComparison]::OrdinalIgnoreCase))
@@ -283,7 +304,7 @@ function Convert-GitHubUrl(){
         [string]$Url
     )
     
-    $githubUriRegex = "(?<Scheme>https://)(?<Host>github.com)/(?<User>[^/]*)/(?<Repo>[^/]*)(/tree/(?<Branch>[^/]*)(/(?<Folder>.*))?)?(/archive/(?<Branch>.*).zip)?";
+    $githubUriRegex = "(?<Scheme>https://)(?<Host>github.com)/(?<User>[^/]*)/(?<Repo>[^/]*)((?<IsFile>/tree/|/blob/)(?<Branch>[^/]*)(/(?<Folder>.*))?)?(/archive/(?<Branch>.*).zip)?";
 
     $githubMatch = [regex]::Match($Url, $githubUriRegex);
 
@@ -292,10 +313,11 @@ function Convert-GitHubUrl(){
         #Write-Error -Message "Incorrect 'Host' value. The 'github.com' domain expected" -Category InvalidArgument
     }
     return @{ 
-        User = GetGroupValue $githubMatch "User"
-        Repo = GetGroupValue $githubMatch "Repo"
-        Branch = GetGroupValue $githubMatch "Branch" "master"
-        ModulePath = GetGroupValue $githubMatch "Folder"
+        User = GetGroupValue $githubMatch "User";
+        Repo = GetGroupValue $githubMatch "Repo";
+        Branch = GetGroupValue $githubMatch "Branch" "master";
+        ModulePath = GetGroupValue $githubMatch "Folder";
+        IsFile = ((GetGroupValue $githubMatch "IsFile") -eq '/blob/');
     }
 }
 
@@ -309,10 +331,10 @@ function Get-CommitInfo {
     $json = Invoke-WebRequest $restInfoUrl | Select-Object  -ExpandProperty Content | ConvertFrom-Json
 
     return @{
-        Date = $json[0].commit.author.date
-        Author = $json[0].commit.author.name
-        Message = $json[0].commit.message
-        Hash = $json[0].sha
+        Date = $json[0].commit.author.date;
+        Author = $json[0].commit.author.name;
+        Message = $json[0].commit.message;
+        Hash = $json[0].sha;
     }
 }
 
@@ -351,9 +373,9 @@ function New-GeneratedManifest {
         GUID = $Guid
         Author  = $User
         Copyright  = "(c) $User. All rights reserved."
-        #CmdletsToExport = '*'
+        CmdletsToExport = '*'
         NestedModules = $ScriptFiles
-        FunctionsToExport = @()
+        FunctionsToExport = '*'
         VariablesToExport = @()
         AliasesToExport = @()
        
@@ -375,15 +397,12 @@ if ( "x$Url" -eq "x" -and "x$Repo" -eq "x" ) { #-and "x$FileUrl" -eq "x" ) {
             $Url = $result[$result.keys[0]];
         }
         1 { 
-            $res = Read-RepoInfo -User $User -Repo $Repo -ModulePath $ModulePath  -Branch $Branch
-            $User = $res['User'];
-            $Repo = $res['Repo'];
-            $Branch = $res['Branch'];
-            $ModulePath = $res['ModulePath'];
-         }
-        2 {
-            $result = $host.ui.Prompt($null,$null,"Github File Url");
-            $FileUrl = $result[$result.keys[0]];
+            $repoInfo = Read-RepoInfo -DefaultUser $User -DefaultRepo $Repo -DefaultModulePath $ModulePath  -DefaultBranch $Branch
+            $User = $repoInfo['User'];
+            $Repo = $repoInfo['Repo'];
+            $Branch = $repoInfo['Branch'];
+            $ModulePath = $repoInfo['ModulePath'];
+            $IsFile = $repoInfo['IsFile'];
         }
     }
 }
@@ -395,26 +414,23 @@ if( -not [string]::IsNullOrWhitespace($Url) ){
     $Repo = $res['Repo'];
     $Branch = $res['Branch'];
     $ModulePath = $res['ModulePath'];
-}
-
-
-# try convert url to fully cvalified path
-if( -not [string]::IsNullOrWhitespace($Url) ){
-    $res = Convert-GitHubUrl -Url $Url
-    $User = $res['User'];
-    $Repo = $res['Repo'];
-    $Branch = $res['Branch'];
-    $ModulePath = $res['ModulePath'];
+    $IsFile = $res['IsFile'];
 }
 
 if( -not ([string]::IsNullOrWhitespace($ModulePath)) ){
-    $moduleToLoad = $ModulePath;
+    ##remove fiew name line number and starting slash
+    $moduleToLoad = $ModulePath.TrimStart('/').Split("#")[0] 
     $moduleName = Split-Path $moduleToLoad -leaf;
     
 }
 else{
     $moduleName = $Repo;
     $moduleToLoad = "";
+}
+
+#for file modules remove file extension 
+if( $IsFile ){
+    $moduleName =  Split-Path $moduleName -LeafBase
 }
 
 if( ([string]::IsNullOrWhitespace($Branch)) ){
@@ -441,7 +457,7 @@ $commitHash = $res['Hash'];
 $datedVersion = $date.ToString("yy.MM.ddHH.mmss")
 $moduleFolder += "\$datedVersion"
 
-Expand-ModuleZip -Archive $archiveFile -Module $moduleToLoad -DestFolder $moduleFolder
+Expand-ModuleZip -Archive $archiveFile -Module $moduleToLoad -DestFolder $moduleFolder -IsFile $IsFile
 
 #Move-ModuleFiles -ArchiveFolder $archiveName -Branch $Branch -Module $moduleToLoad -DestFolder $moduleFolder;
 
@@ -453,6 +469,7 @@ Out-File -InputObject $commitHash -FilePath "$moduleFolder\hash"
 
 #if the manifest file is apsent - try to generate a new one
 if( ! (Test-Path "$moduleFolder\*.psd1") ){
+
 
 
     $identity = $User+$Repo+$moduleName
